@@ -1,7 +1,5 @@
 # App Exemplo Seeflex
 
->**Note**: Make sure you have completed the [React Native - Environment Setup](https://reactnative.dev/docs/environment-setup) instructions till "Creating a new application" step, before proceeding.
-
 ## Configuração do servidor
 
 No arquivo App.js, a variavel "urlsDisponiveis" irá conter a descrição dos seus servidores. Caso possua mais de um servidor, será aberta uma tela para seleção do servidor no primeiro acesso do usuário.
