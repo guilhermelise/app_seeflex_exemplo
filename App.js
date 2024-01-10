@@ -6,7 +6,7 @@ const App = () => {
   const urlsDisponiveis = [
     { title: 'Nome do Servidor', url: 'https://homologacao.seeflex.com.br' }
   ];
-  const OneSignalAppID = '8d653703-fe6e-49ed-9220-36a61f554da7';
+  const OneSignalAppID = 'xxxxxx-xxxxx-xxxx-xxxx-xxxxxxxx';
 
   useEffect(() => {
     componentDidMount();
