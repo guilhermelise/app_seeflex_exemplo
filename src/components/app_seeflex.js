@@ -25,6 +25,7 @@ import CookieManager from '@react-native-cookies/cookies';
 import axios from 'axios';
 import ModalSelector from 'react-native-modal-selector';
 import moment from 'moment';
+import permissoes from './permissoes';
 
 const AppSeeflex = (props) => {
   const webview = useRef(null);
@@ -102,6 +103,8 @@ const AppSeeflex = (props) => {
 
   const componentDidMount = async () => {
     try {
+      await permissoes.solicitarPermissoes();
+
       OneSignal.initialize(props.OneSignalAppID);
       OneSignal.Notifications.requestPermission(true);
       OneSignal.Notifications.addEventListener('click', onOpened);
@@ -295,6 +298,7 @@ const AppSeeflex = (props) => {
     if (Platform.OS === 'ios') {
       let ativar = false;
       let paginaVoltar = '';
+
       if (urlAtual.indexOf('.pdf') > 0 || urlAtual.indexOf('.csv') > 0) {
         ativar = true;
         paginaVoltar = '/relatorios';
@@ -311,6 +315,13 @@ const AppSeeflex = (props) => {
           paginaVoltar = '/despesas';
         }
       }
+
+      let paginBoletoNF = urlAtual.indexOf('https://seeflex-nfs-boletos.s3') >= 0 || urlAtual.indexOf('https://focusnfe.s3') >= 0;
+      if (urlAtual.indexOf('.pdf') > 0 && paginBoletoNF) {
+        ativar = true;
+        paginaVoltar = '/fechamentos';
+      }
+
       setbtnVoltarIOSAtivo(ativar);
       setPaginaVoltarIOS(paginaVoltar);
     }
@@ -508,7 +519,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: Dimensions.get('window').width,
     bottom: 0,
-    height: 80,
+    height: 50,
     flex: 1,
     backgroundColor: '#0a95ff',
   },
