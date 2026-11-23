@@ -10,7 +10,38 @@ O app abre o sistema web do Seeflex dentro de uma WebView e acrescenta:
 - abertura de rotas do Google Maps, Waze e Telegram nos apps nativos;
 - recarga automática do mapa quando o app fica mais de 60 segundos em segundo plano.
 
-Feito em React Native 0.81, com a nova arquitetura ativa.
+Feito em React Native 0.81, com a nova arquitetura ativa. Esta é a versão atual e recomendada para publicação.
+
+---
+
+## Antes de começar: o que é este app
+
+O app é um **navegador com a marca da sua empresa**. Depois do login, tudo o que aparece (mapa, veículos, histórico,
+alertas, relatórios, cadastros) é o próprio sistema web Seeflex, carregado dentro da WebView. É o mesmo que abrir o
+endereço do sistema no Chrome ou no Safari do celular.
+
+Por isso:
+
+- **Não existe backend, banco de dados ou API do app.** Não há nada para hospedar nem configurar no servidor.
+- **O app não armazena dados.** Usuários, veículos e todo o resto ficam no sistema web.
+- **Se uma função funciona no navegador, funciona no app.** Mudanças no sistema aparecem no app sem precisar publicar
+  nova versão.
+- **Não existe ambiente de testes separado.** Os testes e a revisão das lojas usam o próprio sistema da empresa, com um
+  usuário fornecido por ela.
+
+### Quem cuida do quê
+
+| Item | Responsável |
+| --- | --- |
+| Sistema web: servidor, login, mapa, rastreamento, dados dos usuários | Seeflex |
+| Personalização do app (nome, ícone, identificadores, textos) | Você |
+| Projeto Firebase do app e chave APNs do iOS (seção 5) | Você / empresa dona do app |
+| Contas de desenvolvedor na Google Play e na App Store, publicação e atualizações | Você / empresa dona do app |
+| Usuário de teste para a revisão das lojas | Empresa dona do app |
+| Declarações de privacidade nas lojas | Você (a seção 9 traz as informações) |
+
+A Seeflex **não publica apps de terceiros** nas próprias contas de loja. Nenhum elemento da marca Seeflex precisa
+permanecer no app.
 
 ---
 
@@ -114,8 +145,14 @@ Cada envio para a loja precisa de um número de build maior que o anterior:
 
 ## 5. Notificações push (Firebase)
 
-O servidor Seeflex envia os push pelo **projeto Firebase da Seeflex**. Seu app precisa estar cadastrado nesse projeto.
-Se você criar um projeto Firebase próprio, as notificações enviadas pelo sistema não vão chegar.
+Cada app usa o **próprio projeto Firebase**, criado na conta Google da empresa dona do app. A Seeflex não cria nem
+gerencia projetos Firebase de terceiros.
+
+> **Migração em andamento:** o sistema Seeflex está migrando o envio de push do OneSignal para o Firebase. O app já está
+> pronto para o Firebase, mas o envio pelo sistema usando o Firebase de cada cliente ainda está sendo concluído. Até lá,
+> o app registra o aparelho normalmente, porém as notificações enviadas pelo sistema podem não chegar. Quando a migração
+> terminar, a Seeflex vai informar o que precisa ser feito para ativar o push do seu app. Por isso, já crie e configure
+> o Firebase do app desde agora, seguindo os passos abaixo.
 
 ### Arquivos de exemplo
 
@@ -132,13 +169,17 @@ precisam ser substituídos pelos reais.
 
 ### Como obter os arquivos reais
 
-1. Envie para a Seeflex o **package do Android** e o **Bundle ID do iOS** do seu app.
-2. A Seeflex cadastra o app no Firebase e devolve o `google-services.json` e o `GoogleService-Info.plist`.
-3. Substitua os arquivos de exemplo pelos recebidos, **mantendo o mesmo nome e o mesmo local**. Cuidado ao baixar:
+1. Crie um projeto em [console.firebase.google.com](https://console.firebase.google.com), com a conta Google da empresa
+   dona do app.
+2. No projeto, adicione um app **Android** com o mesmo `applicationId` e baixe o `google-services.json`.
+3. Adicione um app **iOS** com o mesmo Bundle ID e baixe o `GoogleService-Info.plist`. Nos passos seguintes do assistente
+   (adicionar SDK, código de inicialização), só avance: o projeto já tem tudo isso.
+4. Substitua os arquivos de exemplo pelos baixados, **mantendo o mesmo nome e o mesmo local**. Cuidado ao baixar:
    às vezes o arquivo vem com `(1)` no nome ou sem a extensão.
-4. **Só no iOS:** gere uma chave APNs no Apple Developer (Certificates, Identifiers & Profiles > Keys > Apple Push
-   Notifications service). Envie para a Seeflex o arquivo `.p8`, o Key ID e o Team ID. Sem essa chave, o push não chega
-   no iPhone.
+5. **Só no iOS:** gere uma chave APNs no Apple Developer (Certificates, Identifiers & Profiles > Keys > Apple Push
+   Notifications service) e cadastre no Firebase, em Configurações do projeto > Cloud Messaging > Configuração do app
+   Apple, com o arquivo `.p8`, o Key ID e o Team ID. Sem essa chave, o push não chega no iPhone. A chave só pode ser
+   baixada uma vez: guarde uma cópia em local seguro.
 
 ### Conferências
 
@@ -160,6 +201,18 @@ precisam ser substituídos pelos reais.
 - Ao tocar na notificação, o app abre a tela enviada pelo servidor.
 - Cada usuário recebe push em um aparelho: o último que fez login.
 
+### Testar o push
+
+1. Faça login pelo app, em um aparelho físico.
+2. No sistema, abra o cadastro do usuário que fez o login.
+3. Se o registro do push deu certo, aparece um **ícone de sininho**. Clique nele para o sistema enviar uma notificação de
+   teste.
+
+Se o sininho não aparecer, o app não conseguiu registrar o aparelho: confira os itens de "Conferências" acima.
+
+Enquanto a migração do push não estiver concluída (veja o início desta seção), o sininho já confirma que o registro do
+aparelho funcionou, mas a notificação de teste pode não chegar.
+
 ---
 
 ## 6. Permissões
@@ -172,6 +225,9 @@ precisam ser substituídos pelos reais.
 | Notificações | Push |
 | Galeria (iOS) | Anexar imagens no sistema |
 | Armazenamento (Android antigo) | Baixar relatórios |
+
+**Nenhuma permissão é usada em segundo plano.** A localização é pedida só com o app aberto, nas telas de cadastro de
+pontos de interesse e cercas.
 
 Pontos de atenção:
 
@@ -224,7 +280,9 @@ O arquivo para enviar à Play Store fica em `android/app/build/outputs/bundle/re
 
 - Formulário de permissões: o app pede localização e câmera, e o Google pede a justificativa de cada uma.
 - Política de privacidade: obrigatória, com link público.
-- Acesso ao app: informe um usuário e senha de teste para a revisão do Google, já que o app exige login.
+- Acesso ao app: informe um usuário e senha de teste para a revisão do Google, já que o app exige login. Peça esse usuário
+  à empresa dona do sistema e mantenha-o ativo durante toda a revisão.
+- Segurança dos dados: veja a seção 9.
 
 ---
 
@@ -238,17 +296,37 @@ O arquivo para enviar à Play Store fica em `android/app/build/outputs/bundle/re
 Pontos de atenção:
 
 - **Usuário de demonstração:** a Apple exige um login de teste em "App Review Information" no App Store Connect. Sem ele,
-  o app é recusado.
+  o app é recusado. Peça esse usuário à empresa dona do sistema e mantenha-o ativo durante toda a revisão.
+- **App que é só um site:** a Apple pode recusar apps que apenas exibem um site (diretriz 4.2). O app exemplo já tem
+  recursos nativos (login, QR Code, biometria e push), e os apps feitos com esta base foram aprovados sem adaptações.
 - **Ambiente do push:** o `app_seeflex_exemplo.entitlements` usa `aps-environment` = `development`. Com assinatura
   automática, o Xcode troca para `production` sozinho no Archive. Não precisa alterar.
 - **Conexões HTTP:** o `Info.plist` libera conexões sem HTTPS (`NSAllowsArbitraryLoads`), porque o sistema web pode abrir
   conteúdos de terceiros. A Apple pode pedir justificativa na revisão.
 - **Privacidade:** o `PrivacyInfo.xcprivacy` já declara as APIs usadas pelo React Native. Preencha no App Store Connect
-  as informações de coleta de dados (localização, identificadores do aparelho para push).
+  as informações de coleta de dados conforme a seção 9.
 
 ---
 
-## 9. Problemas comuns
+## 9. Privacidade (formulários das lojas)
+
+Informações para preencher o "Segurança dos dados" da Google Play e o "Privacidade do app" da App Store:
+
+| Pergunta | Resposta |
+| --- | --- |
+| Dados coletados pelo app | Localização precisa (só com o app em uso) e identificador do aparelho (token de push) |
+| Para que são usados | Localização: centralizar o mapa nos cadastros. Token: enviar notificações |
+| Localização em segundo plano | Não |
+| Onde ficam os dados | O app não armazena dados. Os dados dos usuários ficam no sistema web |
+| Exclusão de conta | O app não cria contas. Os usuários são cadastrados e excluídos pela empresa no sistema |
+| SDKs de terceiros | Firebase Cloud Messaging (push) |
+| Rastreamento para publicidade | Não |
+
+A política de privacidade (link público) é da empresa dona do app.
+
+---
+
+## 10. Problemas comuns
 
 | Problema | Causa provável |
 | --- | --- |
@@ -257,5 +335,6 @@ Pontos de atenção:
 | App iOS fecha ao abrir | `GoogleService-Info.plist` ausente ou fora do target no Xcode |
 | Push não chega no iPhone | Chave APNs não cadastrada no Firebase, capability Push Notifications desligada ou teste em simulador |
 | Push não chega no Android | Permissão de notificação negada ou arquivo do Firebase de exemplo |
+| Sininho aparece, mas a push de teste não chega | Migração do push ainda não concluída (seção 5) |
 | Mudanças no JS não aparecem | Cache do Metro: rode `npx react-native start --reset-cache` |
 | Erro de build no iOS depois de mudar dependências | Rode `bundle exec pod install` de novo na pasta `ios` |
